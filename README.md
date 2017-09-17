@@ -1,2 +1,2 @@
 # hello_services
-Reactive microservices in Go
+Concurrent calls to microservices in Go
