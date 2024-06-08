@@ -2,23 +2,25 @@ package main
 
 import (
 	"context"
-	"net/http"
 	"encoding/json"
+	"net/http"
+	"os"
 
 	"github.com/go-kit/kit/endpoint"
 	http_t7t "github.com/go-kit/kit/transport/http"
+	"github.com/go-kit/log"
 )
 
 type DigitCharService interface {
-	Chars() string
+	Chars() []rune
 }
 
 type digitCharService struct{}
 
-func (digitCharService) Chars() string {
-	var ret string = ""
-	for i:=65; i<91; i++ {
-		ret += string(i)
+func (digitCharService) Chars() []rune {
+	var ret []rune = []rune{}
+	for i := 65; i < 91; i++ {
+		ret = append(ret, rune(i))
 	}
 	return ret
 }
@@ -30,13 +32,16 @@ type charsResponse struct {
 }
 
 func makeCharsEndpoint(svc DigitCharService) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
+	return func(_ context.Context, request interface{}) (interface{}, error) {
 		chars := svc.Chars()
-		return charsResponse{chars}, nil
+
+		return charsResponse{string(chars)}, nil
 	}
 }
 
 func main() {
+
+	logger := log.NewLogfmtLogger(os.Stderr)
 	svc := digitCharService{}
 
 	charsHandler := http_t7t.NewServer(
@@ -46,7 +51,7 @@ func main() {
 	)
 
 	http.Handle("/chars", charsHandler)
-	http.ListenAndServe(":8080", nil)
+	logger.Log("err", http.ListenAndServe(":8080", nil))
 }
 
 func decodeCharsRequest(_ context.Context, r *http.Request) (interface{}, error) {
